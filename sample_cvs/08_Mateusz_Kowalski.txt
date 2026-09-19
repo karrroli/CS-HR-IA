@@ -1,0 +1,17 @@
+Mateusz Kowalski
+Email: mateusz.kowalski@wp.pl
+Phone: +48 501 234 567
+
+About
+Junior Python developer, recent graduate. Eager to learn.
+
+Skills
+Python, HTML, CSS, Git, Teamwork
+
+Experience
+Intern at CodeLab (2023)
+- Wrote small Python scripts for data processing
+- Worked with the QA team (teamwork)
+
+Education
+BSc Computer Science, Jagiellonian University (2023)

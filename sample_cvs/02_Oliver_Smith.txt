@@ -1,0 +1,18 @@
+Oliver Smith
+Email: oliver.smith@outlook.com
+Phone: +44 7700 900123
+
+About
+Data analyst who moved into software development. Comfortable with Python and SQL.
+
+Skills
+Python, SQL, Excel, Tableau, Statistics, Communication
+
+Experience
+Data Analyst at RetailCo (2020 - present)
+- Wrote SQL queries to build weekly sales reports
+- Automated data cleaning with Python scripts
+- Presented findings to managers, strong communication skills
+
+Education
+BSc Mathematics, University of Manchester

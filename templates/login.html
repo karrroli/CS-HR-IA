@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Candidate Matcher - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="box login-box">
+        <h1>Candidate Matcher</h1>
+        <p>Please log in to continue.</p>
+
+        {% for message in get_flashed_messages() %}
+            <p class="message">{{ message }}</p>
+        {% endfor %}
+
+        <form method="post" action="{{ url_for('login') }}">
+            <label>Email</label>
+            <input type="text" name="email">
+
+            <label>Password</label>
+            <input type="password" name="password">
+
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>
