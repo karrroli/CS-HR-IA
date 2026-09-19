@@ -1,0 +1,23 @@
+Karolina Nowak
+Email: karolina.nowak@gmail.com
+Phone: +48 600 111 222
+
+About
+Backend developer with 4 years of experience building web applications in Python.
+Strong communication skills and a proven record of teamwork in agile teams.
+
+Skills
+Python, Flask, SQL, PostgreSQL, Git, Docker, REST APIs, Communication, Teamwork
+
+Experience
+Software Developer at DataSoft (2021 - present)
+- Built internal tools in Python and Flask
+- Designed SQL databases and optimised SQL queries
+- Led daily stand-ups, focusing on clear communication and teamwork
+
+Junior Developer at WebStart (2019 - 2021)
+- Maintained Flask services written in Python
+- Wrote SQL reports for the finance team
+
+Education
+BSc Computer Science, University of Warsaw

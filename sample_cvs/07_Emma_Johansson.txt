@@ -1,0 +1,18 @@
+Emma Johansson
+Email: emma.johansson@telia.se
+Phone: +46 70 123 45 67
+
+About
+Project manager with an IT background. Excellent communication and teamwork skills.
+
+Skills
+Project management, Scrum, Jira, Communication, Teamwork, Budgeting, SQL basics
+
+Experience
+IT Project Manager at NordicSoft (2018 - present)
+- Coordinated teams of up to 12 people (teamwork)
+- Presented progress to clients every week (communication)
+- Wrote simple SQL queries for progress reports
+
+Education
+MSc Information Systems, Stockholm University

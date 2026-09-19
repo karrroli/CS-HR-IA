@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Candidate Matcher - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="top-bar">
+        <h1>Candidate Matcher</h1>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+    {% for message in get_flashed_messages() %}
+        <p class="message">{{ message }}</p>
+    {% endfor %}
+
+    <!-- Section 1: upload candidate files -->
+    <div class="box">
+        <h2>1. Upload candidate files</h2>
+        <p>Select one or more .txt files. The first line of each file must be the candidate's name.</p>
+        <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+            <input type="file" name="files" accept=".txt" multiple>
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+
+    <!-- Section 2: job requirement keywords -->
+    <div class="box">
+        <h2>2. Job requirement keywords</h2>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Keyword</th>
+                <th>Actions</th>
+            </tr>
+            {% for slot in range(1, 6) %}
+                {% set keyword = job["keyword" + slot|string] %}
+                {% if keyword != "" %}
+                <tr>
+                    <td>{{ slot }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('edit_keyword') }}" class="inline">
+                            <input type="hidden" name="slot" value="{{ slot }}">
+                            <input type="text" name="keyword" value="{{ keyword }}">
+                            <button type="submit">Save</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" action="{{ url_for('delete_keyword') }}" class="inline">
+                            <input type="hidden" name="slot" value="{{ slot }}">
+                            <button type="submit" class="danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+
+        <form method="post" action="{{ url_for('add_keyword') }}">
+            <label>New keyword</label>
+            <input type="text" name="keyword" placeholder="e.g. Python">
+            <button type="submit">Add keyword</button>
+        </form>
+    </div>
+
+    <!-- Section 3: results -->
+    <div class="box">
+        <h2>3. Results</h2>
+        <form method="post" action="{{ url_for('process') }}">
+            <button type="submit" class="big">Process</button>
+        </form>
+
+        <h3>Leaderboard</h3>
+        {% if leaderboard|length == 0 %}
+            <p>No scores yet. Upload files, add keywords and click Process.</p>
+        {% else %}
+        <table>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Match score</th>
+                <th></th>
+            </tr>
+            {% for candidate in leaderboard %}
+                {% if loop.index <= 3 %}
+                <tr class="top-three">
+                {% else %}
+                <tr>
+                {% endif %}
+                    <td>{{ loop.index }}</td>
+                    <td>{{ candidate[1] }}</td>
+                    <td>{{ candidate[2] }}</td>
+                    <td>{{ candidate[3] }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('remove_candidate') }}" class="inline">
+                            <input type="hidden" name="cand_id" value="{{ candidate[0] }}">
+                            <button type="submit" class="danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        {% if unscored_list|length > 0 %}
+        <h3>Not scored yet</h3>
+        <p>These candidates were uploaded after the last Process. Click Process again to score them.</p>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Match score</th>
+                <th></th>
+            </tr>
+            {% for candidate in unscored_list %}
+                <tr>
+                    <td>{{ candidate[1] }}</td>
+                    <td>{{ candidate[2] }}</td>
+                    <td>not scored yet</td>
+                    <td>
+                        <form method="post" action="{{ url_for('remove_candidate') }}" class="inline">
+                            <input type="hidden" name="cand_id" value="{{ candidate[0] }}">
+                            <button type="submit" class="danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+</body>
+</html>

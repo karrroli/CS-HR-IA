@@ -1,0 +1,18 @@
+Isabella Garcia
+Email: isabella.garcia@hotmail.com
+Phone: +34 612 345 678
+
+About
+QA engineer who writes automated tests in Python.
+
+Skills
+Python, Selenium, Pytest, SQL, Jira, Communication, Teamwork
+
+Experience
+QA Engineer at TestPro (2020 - present)
+- Wrote automated tests in Python
+- Checked test data with SQL queries
+- Reported bugs clearly to developers (communication, teamwork)
+
+Education
+BSc Software Engineering, Universidad de Sevilla

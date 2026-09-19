@@ -1,0 +1,22 @@
+Daniel Kim
+Email: daniel.kim@gmail.com
+Phone: +1 415 555 0134
+
+About
+Software engineer focused on backend systems and databases. Python is my main language.
+
+Skills
+Python, Flask, Django, SQL, MySQL, Redis, AWS, Communication, Teamwork
+
+Experience
+Backend Engineer at ShopFast (2019 - present)
+- Built payment services in Python (Flask and Django)
+- Tuned slow SQL queries, reducing report time by 60%
+- Mentored two junior developers, focusing on teamwork and communication
+
+Software Engineer at StartUpOne (2017 - 2019)
+- Wrote Python microservices with Flask
+- Managed SQL schema changes
+
+Education
+BSc Computer Science, University of California
