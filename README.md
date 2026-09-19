@@ -12,6 +12,10 @@ The program is also running online, so it can be opened from a phone without ins
 
 Log in with `hr@gmail.com` / `hr12345`. The demo starts with the 12 sample candidates and the five example keywords already loaded, so you can go straight to **Process**. Because it runs on a free hosting server, the demo data is reset from time to time (anything you upload there may disappear after a while). The real program, run on your own computer, keeps everything permanently.
 
+## Working with the code (branch rule)
+
+All development happens on **one branch only: `dev`**. Every change, fix and experiment is committed directly to `dev`. No other feature branches are created. The `main` branch is only updated from `dev` when the author decides a version is ready to hand in.
+
 ## How to run
 
 1. Install Python 3 (3.10 or newer).
