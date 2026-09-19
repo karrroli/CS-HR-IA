@@ -8,6 +8,7 @@
 # The overall shape (one file, SQLite, session login, templates) follows
 # the official Flask tutorial: https://flask.palletsprojects.com/en/stable/tutorial/
 
+import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -17,8 +18,21 @@ app = Flask(__name__)
 # The secret key lets Flask remember who is logged in between pages.
 app.secret_key = "ib-computer-science-ia-secret"
 
-DATABASE_FILE = "matcher.db"
 MAX_KEYWORDS = 5
+
+# The folder this file is in. Used to find the sample_cvs folder.
+PROGRAM_FOLDER = os.path.dirname(os.path.abspath(__file__))
+
+# ONLINE_DEMO is True only when the program runs on the free hosting
+# server (Vercel). There the project folder is read-only and is wiped
+# from time to time, so the database lives in /tmp and starts with the
+# sample candidates already loaded. On a normal computer this is False.
+ONLINE_DEMO = os.environ.get("VERCEL") is not None
+
+if ONLINE_DEMO:
+    DATABASE_FILE = "/tmp/matcher.db"
+else:
+    DATABASE_FILE = "matcher.db"
 
 
 # ---------------------------------------------------------------------
@@ -47,9 +61,28 @@ def init_db():
         password_hash = generate_password_hash("hr12345")
         db.execute("INSERT INTO User (email, password_hash) VALUES (?, ?)", ("hr@gmail.com", password_hash))
         db.execute("INSERT INTO Job (user_id, keyword1, keyword2, keyword3, keyword4, keyword5) VALUES (1, '', '', '', '', '')")
+        if ONLINE_DEMO:
+            load_demo_data(db)
 
     db.commit()
     db.close()
+
+
+# Only used by the online demo: fills the database with the five example
+# keywords and the 12 sample candidate files from the sample_cvs folder.
+def load_demo_data(db):
+    db.execute("UPDATE Job SET keyword1 = 'Python', keyword2 = 'Flask', keyword3 = 'SQL', "
+               "keyword4 = 'Communication', keyword5 = 'Teamwork' WHERE user_id = 1")
+    folder = os.path.join(PROGRAM_FOLDER, "sample_cvs")
+    for file_name in sorted(os.listdir(folder)):
+        if file_name.endswith(".txt"):
+            sample_file = open(os.path.join(folder, file_name), encoding="utf-8")
+            resume_text = sample_file.read()
+            sample_file.close()
+            name = resume_text.strip().split("\n")[0].strip()
+            contact = find_contact(resume_text)
+            db.execute("INSERT INTO Candidate (user_id, name, contact, resume_text) VALUES (1, ?, ?, ?)",
+                       (name, contact, resume_text))
 
 
 # Returns True if somebody is logged in, otherwise False.

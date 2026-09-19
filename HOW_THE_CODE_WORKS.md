@@ -37,6 +37,8 @@ The password is never stored as plain text. `generate_password_hash` turns it in
 
 `get_db()` opens the database file. Every function that needs the database follows the same three steps: **open, ask, close**. This pattern comes from the official Flask tutorial.
 
+**Online demo only.** At the top of `app.py` there is a small check called `ONLINE_DEMO`. It is `True` only when the program runs on the free hosting server used for the online demo. In that case the database file is kept in the server's temporary folder (the project folder there is read-only) and `load_demo_data()` fills it with the five example keywords and the 12 sample candidates, so the demo is ready to use immediately. On your own computer `ONLINE_DEMO` is `False` and these lines do nothing. This part is not needed for the IA and can be left out when you retype the program.
+
 ## 3. Login (SC-01, Flowchart 1)
 
 Function: `login()`

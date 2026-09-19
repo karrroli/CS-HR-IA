@@ -4,6 +4,14 @@ A small website for an HR user. Log in, upload candidate `.txt` files saved from
 
 Built for the IB Computer Science SL Internal Assessment (Criterion D). The explanation of how every part works, plus the list of sources, is in [HOW_THE_CODE_WORKS.md](HOW_THE_CODE_WORKS.md).
 
+## Online demo
+
+The program is also running online, so it can be opened from a phone without installing anything:
+
+**https://cs-hr-ia-candidate-matcher-monster-automation.vercel.app**
+
+Log in with `hr@gmail.com` / `hr12345`. The demo starts with the 12 sample candidates and the five example keywords already loaded, so you can go straight to **Process**. Because it runs on a free hosting server, the demo data is reset from time to time (anything you upload there may disappear after a while). The real program, run on your own computer, keeps everything permanently.
+
 ## How to run
 
 1. Install Python 3 (3.10 or newer).
