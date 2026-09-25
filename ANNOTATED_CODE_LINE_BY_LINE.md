@@ -7,6 +7,22 @@ How to use this during the interview:
 1. Open `APPENDIX_SOURCE_CODE.txt`.
 2. Each file inside it is numbered here starting at **1**. Do not count the banner lines (`File: app.py`). Count only the code under that banner.
 3. If the teacher points at a line, find that line number in the matching section below and read the “Say this” sentence in your own words.
+4. If the teacher asks “where did you take this from?”, look for the **Source** line under that section and open the link. The algorithms (linear search and bubble sort) have no web source — they follow your Criterion C flowcharts.
+
+## Where the code comes from (say this to the teacher)
+
+The overall shape of the website follows the official Flask tutorial (one Python file, SQLite, session login, HTML templates). Specific pieces follow other official pages. The two algorithms were written from your own flowcharts, not copied from a site.
+
+| What in the program | Where it comes from | Open this link |
+|---------------------|---------------------|----------------|
+| Overall structure: Flask app, routes, templates, session login, open/close SQLite | Flask tutorial (“Flaskr”) | https://flask.palletsprojects.com/en/stable/tutorial/ |
+| Password hashing (`generate_password_hash`, `check_password_hash`) | Werkzeug security docs | https://werkzeug.palletsprojects.com/en/stable/utils/#module-werkzeug.security |
+| Database calls (`connect`, `execute`, `fetchone`, `fetchall`, `commit`, `Row`) | Python sqlite3 docs | https://docs.python.org/3/library/sqlite3.html |
+| `flash()` messages and `get_flashed_messages()` in the pages | Flask flashing pattern | https://flask.palletsprojects.com/en/stable/patterns/flashing/ |
+| File upload (`request.files`, extension check, `multipart/form-data`) | Flask file-upload pattern | https://flask.palletsprojects.com/en/stable/patterns/fileuploads/ |
+| Linear search score (`get_score`) and bubble sort (`bubble_sort`) | Your Criterion C flowcharts — **not copied from the web** | (no link — your design) |
+
+**Say this:** “I did not invent the Flask pattern myself. The website structure follows the official Flask tutorial. The password tools are from Werkzeug. The database calls are from the Python sqlite3 documentation. Upload and flash messages follow Flask’s own examples. The linear search and the bubble sort are mine — they match the flowcharts in Criterion C.”
 
 The program is a small website. One HR person logs in, uploads candidate text files, keeps up to five job keywords, clicks Process, and sees the candidates sorted from the highest match score to the lowest. The top three rows are green.
 
@@ -23,6 +39,11 @@ There is no JavaScript. Every button sends a form, Python does the work, and the
 
 ## Lines 1–4 — imports
 
+**Source (Flask + Werkzeug + Python):**
+- Flask imports: https://flask.palletsprojects.com/en/stable/tutorial/
+- sqlite3: https://docs.python.org/3/library/sqlite3.html
+- Password tools: https://werkzeug.palletsprojects.com/en/stable/utils/#module-werkzeug.security
+
 **Line 1** `import os`
 
 This loads Python’s operating-system tools. Later the program uses them to find its own folder and to read the sample resume files. It is not used for the database.
@@ -33,7 +54,9 @@ This loads Python’s operating-system tools. Later the program uses them to fin
 
 This loads Python’s built-in SQLite library. SQLite is a database stored in one file (`matcher.db`). The program uses `sqlite3` to create tables, insert rows, and read them back.
 
-**Say this:** “I do not install a separate database server. `sqlite3` comes with Python and stores everything in one file.”
+**Source:** https://docs.python.org/3/library/sqlite3.html
+
+**Say this:** “I do not install a separate database server. `sqlite3` comes with Python and stores everything in one file. I followed the Python documentation for this module.”
 
 **Line 3** `from flask import Flask, render_template, request, redirect, url_for, session, flash`
 
@@ -47,13 +70,17 @@ This loads only the Flask tools this program needs:
 - `session` — remembers who is logged in between clicks.
 - `flash` — stores a short message to show on the next page (“3 file(s) uploaded.”).
 
-**Say this:** “Flask is the library that turns this Python file into a website. I only import the pieces I actually use.”
+**Source:** https://flask.palletsprojects.com/en/stable/tutorial/
+
+**Say this:** “Flask is the library that turns this Python file into a website. These names come from the official Flask tutorial. I only import the pieces I actually use.”
 
 **Line 4** `from werkzeug.security import generate_password_hash, check_password_hash`
 
 Werkzeug is the library Flask is built on. These two functions handle passwords. `generate_password_hash` turns `hr12345` into a long scrambled string. `check_password_hash` checks a typed password against that string. The real password is never stored.
 
-**Say this:** “The password is stored as a hash, not as plain text. Even if someone opens the database, they do not see `hr12345`.”
+**Source:** https://werkzeug.palletsprojects.com/en/stable/utils/#module-werkzeug.security
+
+**Say this:** “The password is stored as a hash, not as plain text. Even if someone opens the database, they do not see `hr12345`. These two functions are from the Werkzeug security documentation, which Flask points you to.”
 
 **Line 5** *(blank)*
 
@@ -61,11 +88,13 @@ A blank line does not run. It only separates the imports from the setup below.
 
 ## Lines 6–19 — settings
 
+**Source (Flask app factory / secret key / project layout):** https://flask.palletsprojects.com/en/stable/tutorial/
+
 **Line 6** `app = Flask(__name__)`
 
 This creates the website object and stores it in `app`. Every page is attached to this object later with `@app.route`. `__name__` is the name of this file. Flask uses it to find the `templates` folder and the `static` folder sitting next to `app.py`.
 
-**Say this:** “This one line creates the web application. Flask then knows where my HTML and CSS files are.”
+**Say this:** “This one line creates the web application. Flask then knows where my HTML and CSS files are. That layout — `templates` and `static` next to the Python file — is the pattern from the Flask tutorial.”
 
 **Line 7** *(blank)*
 
@@ -75,7 +104,9 @@ Separates the app object from its secret key.
 
 The secret key signs the login cookie. Flask stores `user_id` in that cookie. Because it is signed with this key, the user cannot edit the cookie and pretend to be someone else. If this string changed, everyone would be logged out.
 
-**Say this:** “The secret key protects the login memory. It is not the HR password. The HR password is `hr12345`, stored as a hash in the database.”
+**Source:** https://flask.palletsprojects.com/en/stable/tutorial/factory/ (Flask tutorial sets a secret key for the session)
+
+**Say this:** “The secret key protects the login memory. It is not the HR password. The HR password is `hr12345`, stored as a hash in the database. Setting a secret key for the session is part of the Flask tutorial.”
 
 **Line 9** *(blank)*
 
@@ -137,23 +168,27 @@ Separates setup from the first function.
 
 ## Lines 21–24 — open the database
 
+**Source (open SQLite per request, use `sqlite3.Row`):**
+- Flask tutorial database pattern: https://flask.palletsprojects.com/en/stable/tutorial/database/
+- Python sqlite3 module: https://docs.python.org/3/library/sqlite3.html
+
 **Line 21** `def get_db():`
 
 Defines a function named `get_db`. It takes no inputs. Every function that needs the database calls this instead of repeating the open steps. The pattern is: open, do the work, close.
 
-**Say this:** “I made one function that opens the database so I do not copy those three lines everywhere.”
+**Say this:** “I made one function that opens the database so I do not copy those three lines everywhere. The Flask tutorial uses the same idea: open the database when you need it.”
 
 **Line 22** `connection = sqlite3.connect(DATABASE_FILE)`
 
 Opens `matcher.db`, or creates it if it does not exist yet. `connection` is the open link. Nothing is saved permanently until `commit` is called.
 
-**Say this:** “`connect` opens the file. If the file is missing, SQLite creates an empty one.”
+**Say this:** “`connect` opens the file. If the file is missing, SQLite creates an empty one. That call is from the Python sqlite3 documentation.”
 
 **Line 23** `connection.row_factory = sqlite3.Row`
 
 By default a row comes back as a tuple, so you must remember that column 0 is the id and column 1 is the email. `sqlite3.Row` lets the program use names: `user["email"]`, `candidate["name"]`. That matches the columns in the ERD.
 
-**Say this:** “This line is why I can write `row["name"]` instead of `row[1]`. It makes the code match the table columns.”
+**Say this:** “This line is why I can write `row["name"]` instead of `row[1]`. It makes the code match the table columns. The Flask tutorial also sets `row_factory` to `sqlite3.Row`.”
 
 **Line 24** `return connection`
 
@@ -167,11 +202,16 @@ Separates functions.
 
 ## Lines 26–42 — create tables and the HR account
 
+**Source (create tables / insert first user / hash password):**
+- SQLite `CREATE TABLE` / `INSERT`: https://docs.python.org/3/library/sqlite3.html
+- Password hash: https://werkzeug.palletsprojects.com/en/stable/utils/#module-werkzeug.security
+- Flask tutorial also creates tables at the start: https://flask.palletsprojects.com/en/stable/tutorial/database/
+
 **Line 26** `def init_db():`
 
 Defines the function that prepares the database. It is called once at the bottom of the file, when the program starts. It is safe to run again because of `IF NOT EXISTS`.
 
-**Say this:** “`init_db` runs at startup. It creates the tables only if they are not already there, so restarting does not wipe data.”
+**Say this:** “`init_db` runs at startup. It creates the tables only if they are not already there, so restarting does not wipe data. Creating tables when the program starts is the same idea as in the Flask tutorial.”
 
 **Line 27** `db = get_db()`
 
@@ -482,6 +522,10 @@ Separates the two scoring functions.
 
 ## Lines 86–93 — linear search score
 
+**Source:** your Criterion C flowchart for scoring — **not copied from a website**. There is no Flask or library link for this algorithm.
+
+**Say this if asked where it comes from:** “The linear search is from my Criterion C design. I wrote the nested loops myself. I did not copy them from a repository.”
+
 **Line 86** `def get_score(resume_text, keyword_list):`
 
 The linear search. Inputs are the full resume and the list of keywords. Output is one integer, the match score.
@@ -528,6 +572,10 @@ After both loops finish, the total is returned. A resume with no hits returns 0,
 Separates scoring from sorting.
 
 ## Lines 95–104 — bubble sort
+
+**Source:** your Criterion C flowchart for ranking — **not copied from a website**. Python’s built-in `sort()` was deliberately not used, so the algorithm stays visible in the code.
+
+**Say this if asked where it comes from:** “The bubble sort is from my Criterion C flowchart. I did not use Python’s built-in sort, and I did not copy this from a site, so the teacher can see the algorithm in my code.”
 
 **Line 95** `def bubble_sort(candidate_list):`
 
@@ -609,11 +657,13 @@ Separates helpers from pages.
 
 ## Lines 112–114 — the start address
 
+**Source (routes and redirects):** https://flask.palletsprojects.com/en/stable/tutorial/views/
+
 **Line 112** `@app.route("/")`
 
 A decorator. It connects the function below to the address `/`, which is the site root, for example `http://localhost:5000/`. When the browser asks for that address, Flask calls `index`.
 
-**Say this:** “The `@` line is not a normal call. It registers the next function as the page for that address.”
+**Say this:** “The `@` line is not a normal call. It registers the next function as the page for that address. Routes like this are how the Flask tutorial connects a URL to a Python function.”
 
 **Line 113** `def index():`
 
@@ -628,6 +678,13 @@ The function for the root address. It does not draw a page of its own.
 Separates routes.
 
 ## Lines 116–137 — login
+
+**Source (login form, session, password check, flash messages):**
+- Flask tutorial login / session: https://flask.palletsprojects.com/en/stable/tutorial/views/
+- Flash messages: https://flask.palletsprojects.com/en/stable/patterns/flashing/
+- Password check: https://werkzeug.palletsprojects.com/en/stable/utils/#module-werkzeug.security
+
+**Say this if asked where login comes from:** “The login page follows the Flask tutorial idea: show a form, check the password hash, then store the user id in the session. The flash messages follow Flask’s flashing pattern.”
 
 **Line 116** `@app.route("/login", methods=["GET", "POST"])`
 
@@ -734,6 +791,8 @@ Separates routes.
 
 ## Lines 139–142 — logout
 
+**Source (clear the session):** https://flask.palletsprojects.com/en/stable/tutorial/views/
+
 **Line 139** `@app.route("/logout")`
 
 Registers the address `/logout`. The method list is omitted, so only GET is allowed. The logout link on the page is a normal link, which is a GET.
@@ -757,6 +816,10 @@ Sends the browser back to the login page.
 Separates routes.
 
 ## Lines 144–165 — dashboard
+
+**Source (draw a page with `render_template` and data from SQLite):** https://flask.palletsprojects.com/en/stable/tutorial/templates/
+
+The sorting step inside this page is still your own bubble sort (see lines 95–104). Flask only provides the page; it does not sort the candidates.
 
 **Line 144** `@app.route("/dashboard")`
 
@@ -919,6 +982,10 @@ Closes the connection.
 Separates the helper from the upload page.
 
 ## Lines 181–210 — upload
+
+**Source (file uploads):** https://flask.palletsprojects.com/en/stable/patterns/fileuploads/
+
+**Say this if asked where upload comes from:** “Reading files from the form with `request.files` and checking the extension follows Flask’s file-upload pattern. The name-from-first-line rule and the contact rule are mine.”
 
 **Line 181** `@app.route("/upload", methods=["POST"])`
 
@@ -1099,6 +1166,11 @@ Closes the connection.
 Separates helpers from the keyword pages.
 
 ## Lines 224–244 — add a keyword
+
+**Source:**
+- Form POST + redirect: https://flask.palletsprojects.com/en/stable/tutorial/views/
+- Flash messages for success and errors: https://flask.palletsprojects.com/en/stable/patterns/flashing/
+- The five-slot keyword rules themselves are from your Criterion B/C design
 
 **Line 224** `@app.route("/add_keyword", methods=["POST"])`
 
@@ -1380,6 +1452,11 @@ Separates routes.
 
 ## Lines 289–316 — Process
 
+**Source:**
+- Database insert/delete/commit: https://docs.python.org/3/library/sqlite3.html
+- Flash messages after success or error: https://flask.palletsprojects.com/en/stable/patterns/flashing/
+- The score itself still comes from your linear search (lines 86–93), not from a library
+
 **Line 289** `@app.route("/process", methods=["POST"])`
 
 The Process button. POST only.
@@ -1502,6 +1579,8 @@ Separates the pages from the startup lines.
 
 ## Lines 318–321 — start
 
+**Source (run the Flask development server):** https://flask.palletsprojects.com/en/stable/tutorial/factory/
+
 **Line 318** `init_db()`
 
 Runs as soon as Python loads this file. It is not inside a function, so it is not waiting to be called. Starting the program, or importing it on the server, creates the tables and the HR account if they are missing.
@@ -1530,6 +1609,13 @@ Starts Flask’s development server.
 
 # File: templates/login.html
 
+**Source (HTML templates + Jinja + flash messages on the page):**
+- Flask templates / Jinja: https://flask.palletsprojects.com/en/stable/tutorial/templates/
+- Showing flashed messages: https://flask.palletsprojects.com/en/stable/patterns/flashing/
+- Form POST to a view: https://flask.palletsprojects.com/en/stable/tutorial/views/
+
+**Say this if asked about this page:** “The login HTML follows the Flask tutorial pattern: a template in the `templates` folder, Jinja tags for messages, and a form that posts to the login view. The layout and the wording on the page are mine.”
+
 This file is HTML, plus a few Jinja tags. Jinja is Flask’s template language. `{{ something }}` prints a value. `{% something %}` is a command, such as a loop. Flask runs those tags on the server before the browser sees the page. The browser receives normal HTML.
 
 **Line 1** `<!DOCTYPE html>`
@@ -1552,7 +1638,9 @@ The text on the browser tab. The user does not see it inside the page box.
 
 Links the CSS file. `rel="stylesheet"` means “this file describes appearance”. `url_for(...)` becomes an address such as `/static/style.css`. Using `url_for` is safer than typing the path, because Flask knows where static files are served from.
 
-**Say this:** “The page does not contain the colours. It points at `style.css`.”
+**Source:** https://flask.palletsprojects.com/en/stable/tutorial/static/
+
+**Say this:** “The page does not contain the colours. It points at `style.css`. `url_for` for static files is the Flask tutorial pattern.”
 
 **Line 6** `</head>`
 
@@ -1582,7 +1670,9 @@ Visual space in the file only. It does not create a gap on the page by itself. C
 
 A Jinja loop. `get_flashed_messages()` returns the messages stored by `flash(...)` and then clears them. If login failed, this loop runs once per message. If there is no message, the loop body is skipped. After a refresh, the message is gone, because it was cleared when it was shown.
 
-**Say this:** “Flash messages are one-time. The template loops over them and prints each one.”
+**Source:** https://flask.palletsprojects.com/en/stable/patterns/flashing/
+
+**Say this:** “Flash messages are one-time. The template loops over them and prints each one. That loop is from Flask’s flashing documentation.”
 
 **Line 13** `<p class="message">{{ message }}</p>`
 
@@ -1650,6 +1740,14 @@ Closes the document opened on line 2.
 ---
 
 # File: templates/dashboard.html
+
+**Source (templates, forms, Jinja loops, static CSS link):**
+- Flask templates / Jinja: https://flask.palletsprojects.com/en/stable/tutorial/templates/
+- Flash messages: https://flask.palletsprojects.com/en/stable/patterns/flashing/
+- File form with `enctype="multipart/form-data"`: https://flask.palletsprojects.com/en/stable/patterns/fileuploads/
+- Static files: https://flask.palletsprojects.com/en/stable/tutorial/static/
+
+**Say this if asked about this page:** “The dashboard is my own layout: upload, keywords, and results. The tools that make it work — Jinja loops, forms that post to Flask views, the file-upload encoding, and the static CSS link — come from the Flask documentation. The green top-three rows and the ‘not scored yet’ section are my design.”
 
 **Line 1** `<!DOCTYPE html>`
 
@@ -1734,7 +1832,9 @@ The upload form.
 - POST to the Python `upload` function.
 - `enctype="multipart/form-data"` is required for files. Without it, the browser would send the file name and not the file contents, and `request.files` would not work.
 
-**Say this:** “The encoding type is what allows a file, not just text, to be submitted.”
+**Source:** https://flask.palletsprojects.com/en/stable/patterns/fileuploads/
+
+**Say this:** “The encoding type is what allows a file, not just text, to be submitted. That requirement is written in Flask’s file-upload documentation.”
 
 **Line 21** `<input type="file" name="files" accept=".txt" multiple>`
 
@@ -2191,6 +2291,12 @@ Closes the document.
 
 # File: static/style.css
 
+**Source:** the idea of putting appearance in a `static` folder and linking it with `url_for` comes from the Flask tutorial: https://flask.palletsprojects.com/en/stable/tutorial/static/
+
+The colours, the green top-three rows, and the card layout are yours. There is no Bootstrap and no copied CSS theme.
+
+**Say this if asked:** “Flask tells you to put CSS in `static`. The stylesheet itself is simple CSS I wrote for this IA.”
+
 CSS is a list of rules. A rule is a selector, then braces, then properties. The selector chooses elements. Each property sets one visual detail. Nothing in this file calculates scores.
 
 **Line 1** `body {`
@@ -2608,11 +2714,13 @@ Ends the highlight rule. This is the last line of the stylesheet.
 
 # File: requirements.txt
 
+**Source:** Flask installation / project setup in the tutorial: https://flask.palletsprojects.com/en/stable/tutorial/layout/
+
 **Line 1** `Flask>=3.0`
 
 This is not program logic. It tells the installer which library to download. `Flask` is the package. `>=3.0` means version 3.0 or any newer 3.x version. Installing Flask also installs its dependencies, including Werkzeug, which provides the password functions. `sqlite3` is not listed because it comes with Python.
 
-**Say this:** “The only extra library I install is Flask. The database library is already in Python.”
+**Say this:** “The only extra library I install is Flask. The database library is already in Python. Listing Flask in `requirements.txt` is the normal way to record that dependency.”
 
 ---
 
@@ -2620,14 +2728,17 @@ This is not program logic. It tells the installer which library to download. `Fl
 
 Use these as practice. The line numbers are in `app.py` unless another file is named.
 
+**Where did you take the code from?**
+Open the table at the top of this file. Short answer: overall structure and pages from the Flask tutorial (https://flask.palletsprojects.com/en/stable/tutorial/); passwords from Werkzeug (https://werkzeug.palletsprojects.com/en/stable/utils/#module-werkzeug.security); database calls from the Python sqlite3 docs (https://docs.python.org/3/library/sqlite3.html); upload from https://flask.palletsprojects.com/en/stable/patterns/fileuploads/; flash messages from https://flask.palletsprojects.com/en/stable/patterns/flashing/; linear search and bubble sort from my Criterion C flowcharts, not from the web.
+
 **Why is the password not stored as `hr12345`?**
-Line 35 hashes it before line 36 stores it. Line 130 checks the hash. The original password cannot be read back.
+Line 35 hashes it before line 36 stores it. Line 130 checks the hash. The original password cannot be read back. The hash functions are from Werkzeug: https://werkzeug.palletsprojects.com/en/stable/utils/#module-werkzeug.security
 
 **Where is linear search?**
-Lines 86 to 93. The outer loop walks every resume word. The inner loop compares that word with every keyword. Each hit adds 1.
+Lines 86 to 93. The outer loop walks every resume word. The inner loop compares that word with every keyword. Each hit adds 1. This is from my flowchart, not from a website.
 
 **Where is bubble sort?**
-Lines 95 to 104. Neighbours are compared. If the left score is smaller, they swap, so the largest score moves to the front. Index 3 is the score.
+Lines 95 to 104. Neighbours are compared. If the left score is smaller, they swap, so the largest score moves to the front. Index 3 is the score. This is from my flowchart, not from a website.
 
 **Why not use Python’s sort?**
 So the algorithm required by the flowchart is visible in the code, not hidden inside a library call.
