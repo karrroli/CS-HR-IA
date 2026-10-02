@@ -7,6 +7,11 @@
 #
 # The overall shape (one file, SQLite, session login, templates) follows
 # the official Flask tutorial: https://flask.palletsprojects.com/en/stable/tutorial/
+#
+# AI (LLM) acknowledgment: an AI coding assistant helped with Flask setup,
+# debugging upload/validation edge cases, and drafting Criterion D notes.
+# Algorithm choices (linear search, bubble sort), database design and final
+# code comments were reviewed and owned by me.
 
 import os
 import sqlite3
