@@ -1,6 +1,6 @@
 # Criterion D – Development
 
-This section shows the main techniques used to build the Candidate Matcher. For each technique I include a short annotated code excerpt, explain what it does, justify why I chose it, and link it to the success criteria. Full source code is in **Appendix A: `app.py`**.
+This section shows the main techniques used to build the Candidate Matcher. For each technique I include a short code excerpt, explain what it does, justify why I chose it, and link it to the success criteria. Full source code is in **Appendix A** (`APPENDIX_SOURCE_CODE.txt`). Line numbers below match that file. The appendix is comment-free.
 
 ---
 
@@ -8,7 +8,7 @@ This section shows the main techniques used to build the Candidate Matcher. For 
 
 ![Login / password hashing code excerpt](criteria_d/screenshots/code_01_login_hash.png)
 
-*See Appendix A: `app.py`, lines 66–68 and 197–201.*
+*See Appendix A, lines 39–40 and 134–138.*
 
 The first technique hashes the HR password before it is stored in SQLite, and checks it again at login. `generate_password_hash()` turns `"hr12345"` into a long scrambled string, so the real password is never saved as plain text. At login, `check_password_hash()` compares the typed password with the stored hash. If the email is missing or the password is wrong, an error is shown and the user stays on the login page. If the match is successful, `session["user_id"]` remembers who is logged in.
 
@@ -20,7 +20,7 @@ I chose password hashing instead of storing the password in plain text because l
 
 ![File upload validation code excerpt](criteria_d/screenshots/code_02_file_upload.png)
 
-*See Appendix A: `app.py`, lines 267–282.*
+*See Appendix A, lines 190–205.*
 
 This excerpt shows how LinkedIn text enters the system. `request.files.getlist("files")` receives one or many files in one submission. The code checks that a file was selected, then that each name ends with `.txt`. Invalid types are rejected with a flash message and are not stored. For a valid file, `.read()` loads the text and the candidate name is taken from the first line.
 
@@ -34,7 +34,7 @@ A limitation is that only the extension is checked, not the real content type, b
 
 ![Linear search scoring code excerpt](criteria_d/screenshots/code_03_linear_search.png)
 
-*See Appendix A: `app.py`, lines 138–145.*
+*See Appendix A, lines 90–97.*
 
 `get_score()` is the matching algorithm from Flowchart_5. First `clean_words()` turns the resume into lower-case words and removes punctuation, so `"Python,"` and `"python"` match. Then a nested loop compares every resume word with every keyword. Each equal pair adds 1 to the score. The final score is stored in the Match table and shown next to the candidate name.
 
@@ -48,7 +48,7 @@ Scoring was tested with different keyword hit counts, including a zero-score can
 
 ![Bubble sort ranking code excerpt](criteria_d/screenshots/code_04_bubble_sort.png)
 
-*See Appendix A: `app.py`, lines 151–160.*
+*See Appendix A, lines 99–108.*
 
 After scoring, `bubble_sort()` ranks candidates. Nested loops compare neighbours and swap them if the left score (`left[3]`) is lower than the right score, so the list ends highest to lowest. The dashboard shows this list and highlights the first three rows in green with the `top-three` CSS class.
 
@@ -64,7 +64,7 @@ I chose bubble sort because the list is small (about 10–50 people), so O(n²) 
 
 ![SQLite parameterised query code excerpt](criteria_d/screenshots/code_05_sqlite.png)
 
-*See Appendix A: `app.py`, lines 402–408.*
+*See Appendix A, lines 309–314.*
 
 When Process is clicked, old Match rows for the job are deleted, then each score is inserted with a parameterised SQL statement. The `?` placeholders are filled with `cand_id`, `job_id` and `match_score`. `db.commit()` saves the changes so scores remain after the browser is closed.
 
@@ -76,7 +76,7 @@ I chose SQLite with `?` parameters instead of building SQL with `+` because para
 
 ![Error handling code excerpt](criteria_d/screenshots/code_06_error_handling.png)
 
-*See Appendix A: `app.py`, lines 189–191 and 397–399.*
+*See Appendix A, lines 126–128 and 303–306.*
 
 Error handling is used across login, upload, keywords and Process. Empty fields, wrong passwords, non-`.txt` files, empty or duplicate keywords, and Process with missing data all show a flash message instead of crashing. File reading is also in `try/except` so a broken file does not stop the whole upload loop.
 
@@ -125,10 +125,10 @@ The strategy covers normal, abnormal and extreme data. One limitation is that bu
 
 ## AI (LLM) acknowledgment
 
-An AI coding assistant (LLM) helped with Flask setup, debugging some upload/validation edge cases, and drafting notes for this Criterion D write-up. The main algorithm choices (linear search and bubble sort), the SQLite design, and the final code comments were reviewed and decided by me. The same acknowledgment is in a comment at the top of `app.py` (Appendix A, lines 11–14).
+An AI coding assistant (LLM) helped with Flask setup, debugging some upload/validation edge cases, and drafting notes for this Criterion D write-up. The main algorithm choices (linear search and bubble sort), the SQLite design, and the final wording were reviewed and decided by me. The same acknowledgment is in a short note at the top of the development file `app.py`. Appendix A itself is comment-free code only.
 
 ---
 
 ## Appendix reference
 
-All excerpts refer to **Appendix A: `app.py`**. Screenshots used above are in `docs/criteria_d/screenshots/`.
+All excerpts refer to **Appendix A** (`APPENDIX_SOURCE_CODE.txt`). Screenshots used above are in `docs/criteria_d/screenshots/` and show the same comment-free lines.
