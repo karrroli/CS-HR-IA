@@ -140,12 +140,15 @@ On the page, `loop.index` gives the rank (1, 2, 3 …). Ranks 1–3 get the CSS 
 
 The leaderboard is drawn from the Match table every time, so scores are still shown after a refresh or after logging out and back in. (T-16)
 
-## 9. Where the code differs from the Criterion B / C text
+## 9. Where the code differs from the Criterion A / B / C text
 
-These are small and worth fixing in the write-up so everything matches:
+Ready-to-paste report fixes (Criterion A checked against the Drive file, plus B/C checklist) are in [REPORT_VS_CODE_CORRECTIONS.md](REPORT_VS_CODE_CORRECTIONS.md). Do not change the program — change the write-up.
+
+Short list of the main mismatches:
 
 | In the report | In the code | Why |
 |---------------|-------------|-----|
+| Job requirements examples: years of experience, education | Up to five single-word skill keywords | Success criteria must describe keywords, not separate experience fields |
 | `flask_login` / `@login_required` | Flask's own `session` and an `is_logged_in()` check | Same idea, fewer moving parts to explain |
 | Bootstrap | plain `style.css` | Nothing to explain that is not visible in the file |
 | Table called "Requirements" in one place, "Job" in the ERD | `Job` | The ERD is the authoritative design |
