@@ -1,0 +1,17 @@
+Ahmed Hassan
+Email: ahmed.hassan@gmail.com
+Phone: +20 100 123 4567
+
+About
+Mobile developer building Android and iOS apps.
+
+Skills
+Kotlin, Swift, Java, Firebase, Git, Teamwork
+
+Experience
+Mobile Developer at AppWorks (2019 - present)
+- Published 5 apps on Google Play and the App Store
+- Worked closely with designers (teamwork)
+
+Education
+BSc Computer Engineering, Cairo University

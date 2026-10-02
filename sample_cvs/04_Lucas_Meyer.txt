@@ -1,0 +1,21 @@
+Lucas Meyer
+Email: lucas.meyer@gmx.de
+Phone: +49 151 2345 6789
+
+About
+Full-stack developer. Python on the backend with Flask, JavaScript on the frontend.
+
+Skills
+Python, Flask, JavaScript, React, SQL, SQLite, Git, Teamwork
+
+Experience
+Full-stack Developer at CloudNest (2020 - present)
+- Developed a Flask API in Python used by 20,000 users
+- Wrote SQL migrations and maintained the SQLite test database
+- Worked in a team of six developers (teamwork, code reviews)
+
+Intern at TechHaus (2019)
+- Fixed bugs in a Python Flask application
+
+Education
+BSc Informatics, TU Munich

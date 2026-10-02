@@ -1,0 +1,603 @@
+==============================================================================
+File: app.py
+==============================================================================
+
+import os
+import sqlite3
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+
+app = Flask(__name__)
+
+app.secret_key = "ib-computer-science-ia-secret"
+
+MAX_KEYWORDS = 5
+
+PROGRAM_FOLDER = os.path.dirname(os.path.abspath(__file__))
+
+ONLINE_DEMO = os.environ.get("VERCEL") is not None
+
+if ONLINE_DEMO:
+    DATABASE_FILE = "/tmp/matcher.db"
+else:
+    DATABASE_FILE = "matcher.db"
+
+def get_db():
+    connection = sqlite3.connect(DATABASE_FILE)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+def init_db():
+    db = get_db()
+    db.execute("CREATE TABLE IF NOT EXISTS User (user_id INTEGER PRIMARY KEY, email TEXT, password_hash TEXT)")
+    db.execute("CREATE TABLE IF NOT EXISTS Candidate (cand_id INTEGER PRIMARY KEY, user_id INTEGER, name TEXT, contact TEXT, resume_text TEXT)")
+    db.execute("CREATE TABLE IF NOT EXISTS Job (job_id INTEGER PRIMARY KEY, user_id INTEGER, keyword1 TEXT, keyword2 TEXT, keyword3 TEXT, keyword4 TEXT, keyword5 TEXT)")
+    db.execute("CREATE TABLE IF NOT EXISTS Match (match_id INTEGER PRIMARY KEY, cand_id INTEGER, job_id INTEGER, match_score INTEGER)")
+
+    user = db.execute("SELECT * FROM User WHERE email = ?", ("hr@gmail.com",)).fetchone()
+    if user is None:
+        password_hash = generate_password_hash("hr12345")
+        db.execute("INSERT INTO User (email, password_hash) VALUES (?, ?)", ("hr@gmail.com", password_hash))
+        db.execute("INSERT INTO Job (user_id, keyword1, keyword2, keyword3, keyword4, keyword5) VALUES (1, '', '', '', '', '')")
+        if ONLINE_DEMO:
+            load_demo_data(db)
+
+    db.commit()
+    db.close()
+
+def load_demo_data(db):
+    db.execute("UPDATE Job SET keyword1 = 'Python', keyword2 = 'Flask', keyword3 = 'SQL', "
+               "keyword4 = 'Communication', keyword5 = 'Teamwork' WHERE user_id = 1")
+    folder = os.path.join(PROGRAM_FOLDER, "sample_cvs")
+    for file_name in sorted(os.listdir(folder)):
+        if file_name.endswith(".txt"):
+            sample_file = open(os.path.join(folder, file_name), encoding="utf-8")
+            resume_text = sample_file.read()
+            sample_file.close()
+            name = resume_text.strip().split("\n")[0].strip()
+            contact = find_contact(resume_text)
+            db.execute("INSERT INTO Candidate (user_id, name, contact, resume_text) VALUES (1, ?, ?, ?)",
+                       (name, contact, resume_text))
+
+def is_logged_in():
+    if "user_id" in session:
+        return True
+    return False
+
+def get_job():
+    db = get_db()
+    job = db.execute("SELECT * FROM Job WHERE user_id = ?", (session["user_id"],)).fetchone()
+    db.close()
+    return job
+
+def get_keyword_list(job):
+    keyword_list = []
+    for slot in range(1, MAX_KEYWORDS + 1):
+        keyword = job["keyword" + str(slot)]
+        if keyword != "":
+            keyword_list.append(keyword)
+    return keyword_list
+
+def clean_words(text):
+    cleaned = ""
+    for character in text.lower():
+        if character.isalnum():
+            cleaned = cleaned + character
+        else:
+            cleaned = cleaned + " "
+    return cleaned.split()
+
+def get_score(resume_text, keyword_list):
+    words = clean_words(resume_text)
+    score = 0
+    for word in words:
+        for keyword in keyword_list:
+            if word == keyword.lower().strip():
+                score = score + 1
+    return score
+
+def bubble_sort(candidate_list):
+    n = len(candidate_list)
+    for i in range(n - 1):
+        for j in range(n - 1 - i):
+            left = candidate_list[j]
+            right = candidate_list[j + 1]
+            if left[3] < right[3]:
+                candidate_list[j] = right
+                candidate_list[j + 1] = left
+    return candidate_list
+
+def find_contact(text):
+    for word in text.split():
+        if "@" in word:
+            return word
+    return "not found"
+
+@app.route("/")
+def index():
+    return redirect(url_for("login"))
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"].strip()
+        password = request.form["password"]
+
+        if email == "" or password == "":
+            flash("Please enter both email and password.")
+            return render_template("login.html")
+
+        db = get_db()
+        user = db.execute("SELECT * FROM User WHERE email = ?", (email,)).fetchone()
+        db.close()
+
+        if user is None or not check_password_hash(user["password_hash"], password):
+            flash("Invalid email or password.")
+            return render_template("login.html")
+
+        session["user_id"] = user["user_id"]
+        return redirect(url_for("dashboard"))
+
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+@app.route("/dashboard")
+def dashboard():
+    if not is_logged_in():
+        return redirect(url_for("login"))
+
+    job = get_job()
+    db = get_db()
+    candidates = db.execute("SELECT * FROM Candidate WHERE user_id = ? ORDER BY cand_id", (session["user_id"],)).fetchall()
+
+    scored_list = []
+    unscored_list = []
+    for candidate in candidates:
+        match = db.execute("SELECT match_score FROM Match WHERE cand_id = ? AND job_id = ?",
+                           (candidate["cand_id"], job["job_id"])).fetchone()
+        if match is None:
+            unscored_list.append([candidate["cand_id"], candidate["name"], candidate["contact"], 0])
+        else:
+            scored_list.append([candidate["cand_id"], candidate["name"], candidate["contact"], match["match_score"]])
+    db.close()
+
+    leaderboard = bubble_sort(scored_list)
+    return render_template("dashboard.html", job=job, leaderboard=leaderboard, unscored_list=unscored_list)
+
+def save_candidate(name, contact, resume_text):
+    db = get_db()
+    existing = db.execute("SELECT cand_id FROM Candidate WHERE user_id = ? AND name = ?",
+                          (session["user_id"], name)).fetchone()
+    if existing is None:
+        db.execute("INSERT INTO Candidate (user_id, name, contact, resume_text) VALUES (?, ?, ?, ?)",
+                   (session["user_id"], name, contact, resume_text))
+    else:
+        db.execute("UPDATE Candidate SET contact = ?, resume_text = ? WHERE cand_id = ?",
+                   (contact, resume_text, existing["cand_id"]))
+        db.execute("DELETE FROM Match WHERE cand_id = ?", (existing["cand_id"],))
+    db.commit()
+    db.close()
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    if not is_logged_in():
+        return redirect(url_for("login"))
+
+    files = request.files.getlist("files")
+    if len(files) == 0 or files[0].filename == "":
+        flash("No file selected.")
+        return redirect(url_for("dashboard"))
+
+    saved_count = 0
+    for file in files:
+        if not file.filename.lower().endswith(".txt"):
+            flash("File " + file.filename + " was rejected: only .txt files are allowed.")
+            continue
+        try:
+            resume_text = file.read().decode("utf-8", "ignore")
+            if resume_text.strip() == "":
+                flash("File " + file.filename + " was rejected: the file is empty.")
+                continue
+            name = resume_text.strip().split("\n")[0].strip()
+            contact = find_contact(resume_text)
+            save_candidate(name, contact, resume_text)
+            saved_count = saved_count + 1
+        except Exception:
+            flash("File " + file.filename + " could not be read.")
+
+    if saved_count > 0:
+        flash(str(saved_count) + " file(s) uploaded.")
+    return redirect(url_for("dashboard"))
+
+def keyword_exists(job, keyword):
+    for existing in get_keyword_list(job):
+        if existing.lower() == keyword.lower():
+            return True
+    return False
+
+def set_keyword_slot(job, slot, keyword):
+    db = get_db()
+    db.execute("UPDATE Job SET keyword" + str(slot) + " = ? WHERE job_id = ?", (keyword, job["job_id"]))
+    db.commit()
+    db.close()
+
+@app.route("/add_keyword", methods=["POST"])
+def add_keyword():
+    if not is_logged_in():
+        return redirect(url_for("login"))
+
+    keyword = request.form["keyword"].strip()
+    job = get_job()
+
+    if keyword == "":
+        flash("Keyword cannot be empty.")
+    elif keyword_exists(job, keyword):
+        flash("Keyword '" + keyword + "' is already in the list.")
+    elif len(get_keyword_list(job)) >= MAX_KEYWORDS:
+        flash("You can only have " + str(MAX_KEYWORDS) + " keywords. Delete one first.")
+    else:
+        for slot in range(1, MAX_KEYWORDS + 1):
+            if job["keyword" + str(slot)] == "":
+                set_keyword_slot(job, slot, keyword)
+                break
+        flash("Keyword '" + keyword + "' added.")
+    return redirect(url_for("dashboard"))
+
+@app.route("/edit_keyword", methods=["POST"])
+def edit_keyword():
+    if not is_logged_in():
+        return redirect(url_for("login"))
+
+    slot = int(request.form["slot"])
+    new_keyword = request.form["keyword"].strip()
+    job = get_job()
+
+    if new_keyword == "":
+        flash("Keyword cannot be empty.")
+    elif new_keyword.lower() != job["keyword" + str(slot)].lower() and keyword_exists(job, new_keyword):
+        flash("Keyword '" + new_keyword + "' is already in the list.")
+    else:
+        set_keyword_slot(job, slot, new_keyword)
+        flash("Keyword updated to '" + new_keyword + "'.")
+    return redirect(url_for("dashboard"))
+
+@app.route("/delete_keyword", methods=["POST"])
+def delete_keyword():
+    if not is_logged_in():
+        return redirect(url_for("login"))
+
+    slot = int(request.form["slot"])
+    job = get_job()
+    set_keyword_slot(job, slot, "")
+    flash("Keyword deleted.")
+    return redirect(url_for("dashboard"))
+
+@app.route("/remove_candidate", methods=["POST"])
+def remove_candidate():
+    if not is_logged_in():
+        return redirect(url_for("login"))
+
+    cand_id = int(request.form["cand_id"])
+    db = get_db()
+    db.execute("DELETE FROM Match WHERE cand_id = ?", (cand_id,))
+    db.execute("DELETE FROM Candidate WHERE cand_id = ? AND user_id = ?", (cand_id, session["user_id"]))
+    db.commit()
+    db.close()
+    flash("Candidate removed.")
+    return redirect(url_for("dashboard"))
+
+@app.route("/process", methods=["POST"])
+def process():
+    if not is_logged_in():
+        return redirect(url_for("login"))
+
+    job = get_job()
+    keyword_list = get_keyword_list(job)
+    db = get_db()
+    candidates = db.execute("SELECT * FROM Candidate WHERE user_id = ?", (session["user_id"],)).fetchall()
+
+    if len(candidates) == 0:
+        flash("No candidates to process. Upload some .txt files first.")
+    elif len(keyword_list) == 0:
+        flash("No keywords to match. Add at least one keyword first.")
+    else:
+        try:
+            db.execute("DELETE FROM Match WHERE job_id = ?", (job["job_id"],))
+            for candidate in candidates:
+                score = get_score(candidate["resume_text"], keyword_list)
+                db.execute("INSERT INTO Match (cand_id, job_id, match_score) VALUES (?, ?, ?)",
+                           (candidate["cand_id"], job["job_id"], score))
+            db.commit()
+            flash(str(len(candidates)) + " candidate(s) processed.")
+        except sqlite3.Error:
+            flash("A database error happened while saving the scores.")
+
+    db.close()
+    return redirect(url_for("dashboard"))
+
+init_db()
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
+
+==============================================================================
+File: templates/login.html
+==============================================================================
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Candidate Matcher - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="box login-box">
+        <h1>Candidate Matcher</h1>
+        <p>Please log in to continue.</p>
+
+        {% for message in get_flashed_messages() %}
+            <p class="message">{{ message }}</p>
+        {% endfor %}
+
+        <form method="post" action="{{ url_for('login') }}">
+            <label>Email</label>
+            <input type="text" name="email">
+
+            <label>Password</label>
+            <input type="password" name="password">
+
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>
+
+==============================================================================
+File: templates/dashboard.html
+==============================================================================
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Candidate Matcher - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="top-bar">
+        <h1>Candidate Matcher</h1>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+    {% for message in get_flashed_messages() %}
+        <p class="message">{{ message }}</p>
+    {% endfor %}
+
+    <div class="box">
+        <h2>1. Upload candidate files</h2>
+        <p>Select one or more .txt files. The first line of each file must be the candidate's name.</p>
+        <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+            <input type="file" name="files" accept=".txt" multiple>
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+
+    <div class="box">
+        <h2>2. Job requirement keywords</h2>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Keyword</th>
+                <th>Actions</th>
+            </tr>
+            {% for slot in range(1, 6) %}
+                {% set keyword = job["keyword" + slot|string] %}
+                {% if keyword != "" %}
+                <tr>
+                    <td>{{ slot }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('edit_keyword') }}" class="inline">
+                            <input type="hidden" name="slot" value="{{ slot }}">
+                            <input type="text" name="keyword" value="{{ keyword }}">
+                            <button type="submit">Save</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" action="{{ url_for('delete_keyword') }}" class="inline">
+                            <input type="hidden" name="slot" value="{{ slot }}">
+                            <button type="submit" class="danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+
+        <form method="post" action="{{ url_for('add_keyword') }}">
+            <label>New keyword</label>
+            <input type="text" name="keyword" placeholder="e.g. Python">
+            <button type="submit">Add keyword</button>
+        </form>
+    </div>
+
+    <div class="box">
+        <h2>3. Results</h2>
+        <form method="post" action="{{ url_for('process') }}">
+            <button type="submit" class="big">Process</button>
+        </form>
+
+        <h3>Leaderboard</h3>
+        {% if leaderboard|length == 0 %}
+            <p>No scores yet. Upload files, add keywords and click Process.</p>
+        {% else %}
+        <table>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Match score</th>
+                <th></th>
+            </tr>
+            {% for candidate in leaderboard %}
+                {% if loop.index <= 3 %}
+                <tr class="top-three">
+                {% else %}
+                <tr>
+                {% endif %}
+                    <td>{{ loop.index }}</td>
+                    <td>{{ candidate[1] }}</td>
+                    <td>{{ candidate[2] }}</td>
+                    <td>{{ candidate[3] }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('remove_candidate') }}" class="inline">
+                            <input type="hidden" name="cand_id" value="{{ candidate[0] }}">
+                            <button type="submit" class="danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        {% if unscored_list|length > 0 %}
+        <h3>Not scored yet</h3>
+        <p>These candidates were uploaded after the last Process. Click Process again to score them.</p>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Match score</th>
+                <th></th>
+            </tr>
+            {% for candidate in unscored_list %}
+                <tr>
+                    <td>{{ candidate[1] }}</td>
+                    <td>{{ candidate[2] }}</td>
+                    <td>not scored yet</td>
+                    <td>
+                        <form method="post" action="{{ url_for('remove_candidate') }}" class="inline">
+                            <input type="hidden" name="cand_id" value="{{ candidate[0] }}">
+                            <button type="submit" class="danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+</body>
+</html>
+
+==============================================================================
+File: static/style.css
+==============================================================================
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+    color: #222;
+}
+
+h1, h2, h3 {
+    margin-top: 0;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 900px;
+    margin: 0 auto 20px auto;
+}
+
+.box {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto 20px auto;
+}
+
+.login-box {
+    max-width: 350px;
+    margin-top: 80px;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="password"] {
+    padding: 6px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    width: 250px;
+}
+
+button {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    background-color: #2d6cdf;
+    color: white;
+    cursor: pointer;
+    margin-top: 6px;
+}
+
+button.danger {
+    background-color: #c0392b;
+}
+
+button.big {
+    font-size: 18px;
+    padding: 10px 30px;
+}
+
+form.inline {
+    display: inline;
+}
+
+.message {
+    max-width: 900px;
+    margin: 0 auto 15px auto;
+    padding: 10px;
+    background-color: #fff3cd;
+    border: 1px solid #f0d27a;
+    border-radius: 4px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #eef1f5;
+}
+
+tr.top-three td {
+    background-color: #d4f5d4;
+    font-weight: bold;
+}
+
+==============================================================================
+File: requirements.txt
+==============================================================================
+
+Flask>=3.0

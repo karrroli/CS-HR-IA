@@ -1,0 +1,11 @@
+---
+description: Single development branch rule for this repository
+alwaysApply: true
+---
+
+# Branch rule
+
+- All development in this repository happens on the single branch `dev`.
+- Commit and push every change directly to `dev`. Do not create feature branches.
+- `main` is only updated from `dev` when the author explicitly asks to hand in a version.
+- Any pull request must go from `dev` to `main`.
